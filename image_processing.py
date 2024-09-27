@@ -67,19 +67,66 @@ def calculate_markov_process(image):
     
     return transition_matrix
 
+# Додатковий новий функціонал
+def segment_image(image, n_segments=4):
+    # Сегментуємо зображення на n частин
+    height = image.shape[0]
+    segments = np.array_split(image, n_segments, axis=0)
+    return segments
+
+def process_segments(segments):
+    entropy_values = []
+    hartley_values = []
+    markov_matrices = []
+    
+    for segment in segments:
+        entropy = calculate_shannon_entropy(segment)
+        hartley = calculate_hartley_measure(segment)
+        markov_matrix = calculate_markov_process(segment)
+        
+        entropy_values.append(entropy)
+        hartley_values.append(hartley)
+        markov_matrices.append(markov_matrix)
+    
+    return entropy_values, hartley_values, markov_matrices
+
+def compare_results(entropy_values, hartley_values):
+    avg_entropy = np.mean(entropy_values)
+    avg_hartley = np.mean(hartley_values)
+    
+    print(f"Середнє значення ентропії для всіх сегментів: {avg_entropy}")
+    print(f"Середнє значення міри Хартлі для всіх сегментів: {avg_hartley}")
+    
+    return avg_entropy, avg_hartley
+
+def visualize_results(image, entropy_values, hartley_values):
+    n_segments = len(entropy_values)
+    fig, ax = plt.subplots(1, n_segments, figsize=(15, 5))
+    
+    segments = np.array_split(image, n_segments, axis=0)
+    
+    for i, segment in enumerate(segments):
+        ax[i].imshow(bgr_to_rgb(segment))
+        ax[i].set_title(f"Сегмент {i+1}\nЕнтропія: {entropy_values[i]:.2f}\nХартлі: {hartley_values[i]:.2f}")
+        ax[i].axis('off')
+    
+    plt.show()
+
 # Вивід оригінального зображення
 image_task1 = bgr_to_rgb(image)
 plt.imshow(image_task1)
 plt.title('Selected image (Task 1)')
-plt.axis('off')  # Вимкнення осей
+plt.axis('off')
 plt.show()
 
-# Обчислення ентропії, міри Хартлі та матриці переходів
-entropy = calculate_shannon_entropy(image)
-hartley_measure = calculate_hartley_measure(image)
-transition_matrix = calculate_markov_process(image)
+# Сегментація зображення
+segments = segment_image(image_task1, n_segments=4)
 
-print(f"Ентропія Шенона: {entropy}")
-print(f"Міра Хартлі: {hartley_measure}")
-print("Матриця переходів (перших 5 значень):")
-print(transition_matrix[:5, :5])  # Вивід лише частини матриці для зручності
+# Обчислення значень для кожного сегмента
+entropy_values, hartley_values, markov_matrices = process_segments(segments)
+
+# Порівняння середніх значень
+avg_entropy, avg_hartley = compare_results(entropy_values, hartley_values)
+
+# Візуалізація результатів
+visualize_results(image_task1, entropy_values, hartley_values)
