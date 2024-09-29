@@ -69,19 +69,32 @@ def process_segments(segments):
     
     return entropy_values, hartley_values, markov_matrices
 
-def compare_results(entropy_values, hartley_values):
+def compare_results(entropy_values, hartley_values, whole_entropy, whole_hartley):
     avg_entropy = np.mean(entropy_values)
     avg_hartley = np.mean(hartley_values)
     
     print(f"Середнє значення ентропії для всіх сегментів: {avg_entropy}")
     print(f"Середнє значення міри Хартлі для всіх сегментів: {avg_hartley}")
+    print(f"Ентропія для цілого зображення: {whole_entropy}")
+    print(f"Міра Хартлі для цілого зображення: {whole_hartley}")
+    
+    if whole_entropy > avg_entropy:
+        print(f"Ентропія для цілого зображення більше за середнє ентропії сегментів.")
+    else:
+        print(f"Ентропія для цілого зображення менше або дорівнює середньому ентропії сегментів.")
+
+    if whole_hartley > avg_hartley:
+        print(f"Міра Хартлі для цілого зображення більше за середнє міри Хартлі сегментів.")
+    else:
+        print(f"Міра Хартлі для цілого зображення менше або дорівнює середньому міри Хартлі сегментів.")
     
     return avg_entropy, avg_hartley
 
-def visualize_results(image, entropy_values, hartley_values, markov_matrices):
+def visualize_results(image, entropy_values, hartley_values, markov_matrices, whole_entropy, whole_hartley, whole_markov_matrix):
     n_segments = len(entropy_values)
-    fig, ax = plt.subplots(1, n_segments, figsize=(15, 5))
     
+    # Візуалізація сегментів
+    fig, ax = plt.subplots(1, n_segments, figsize=(15, 5))
     segments = np.array_split(image, n_segments, axis=0)
     
     for i, segment in enumerate(segments):
@@ -90,15 +103,34 @@ def visualize_results(image, entropy_values, hartley_values, markov_matrices):
         ax[i].axis('off')
 
     plt.show()
-    
-    # Виведення Марковських матриць для кожного сегмента
+
+    # Візуалізація ентропії та міри Хартлі
+    plt.figure(figsize=(10, 5))
+    plt.bar(range(1, n_segments + 1), entropy_values, color='blue', alpha=0.7, label="Ентропія (сегменти)")
+    plt.axhline(y=whole_entropy, color='red', linestyle='--', label="Ентропія (ціле зображення)")
+    plt.legend()
+    plt.title("Ентропія Шеннона: сегменти vs ціле зображення")
+    plt.show()
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(range(1, n_segments + 1), hartley_values, color='green', alpha=0.7, label="Міра Хартлі (сегменти)")
+    plt.axhline(y=whole_hartley, color='red', linestyle='--', label="Міра Хартлі (ціле зображення)")
+    plt.legend()
+    plt.title("Міра Хартлі: сегменти vs ціле зображення")
+    plt.show()
+
+    # Візуалізація Марковських матриць для кожного сегмента і для цілого зображення
     for i, matrix in enumerate(markov_matrices):
-        print(f"Марковська матриця для сегмента {i + 1}:")
-        print(matrix[:5, :5])  # Виводимо тільки перші 5x5 елементів для зручності
         plt.imshow(matrix, cmap='hot', interpolation='nearest')
         plt.title(f'Markov Matrix for Segment {i + 1}')
         plt.colorbar()
         plt.show()
+
+    # Візуалізація Марковської матриці для цілого зображення
+    plt.imshow(whole_markov_matrix, cmap='hot', interpolation='nearest')
+    plt.title('Markov Matrix for Whole Image')
+    plt.colorbar()
+    plt.show()
 
 # Вивід оригінального зображення
 image_task1 = bgr_to_rgb(image)
@@ -113,8 +145,13 @@ segments = segment_image(image_task1, n_segments=4)
 # Обчислення значень для кожного сегмента
 entropy_values, hartley_values, markov_matrices = process_segments(segments)
 
-# Порівняння середніх значень
-avg_entropy, avg_hartley = compare_results(entropy_values, hartley_values)
+# Обчислення значень для цілого зображення (Task 5)
+whole_entropy = calculate_shannon_entropy(image_task1)
+whole_hartley = calculate_hartley_measure(image_task1)
+whole_markov_matrix = calculate_markov_process(image_task1)
 
-# Візуалізація результатів
-visualize_results(image_task1, entropy_values, hartley_values, markov_matrices)
+# Порівняння середніх значень сегментів з цілим зображенням (Task 6)
+avg_entropy, avg_hartley = compare_results(entropy_values, hartley_values, whole_entropy, whole_hartley)
+
+# Візуалізація всіх результатів (Task 8)
+visualize_results(image_task1, entropy_values, hartley_values, markov_matrices, whole_entropy, whole_hartley, whole_markov_matrix)
