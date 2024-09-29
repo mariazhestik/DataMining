@@ -12,47 +12,27 @@ def bgr_to_rgb(image_bgr):  # BGR -> RGB
     return image_rgb
 
 def calculate_shannon_entropy(image):
-    # Перетворення зображення в одномірний масив
     pixels = image.flatten()
-    
-    # Обчислення гістограми значень пікселів
     histogram, _ = np.histogram(pixels, bins=256, range=(0, 256))
-    
-    # Обчислення ймовірностей
     probabilities = histogram / histogram.sum()
-    
-    # Вилучення нульових ймовірностей
     probabilities = probabilities[probabilities > 0]
-    
-    # Обчислення ентропії Шенона
     entropy = -np.sum(probabilities * np.log2(probabilities))
-    
     return entropy
 
 def calculate_hartley_measure(image):
-    # Кількість можливих значень пікселів (для 8-бітних зображень)
     num_possible_values = 256
-    
-    # Міра Хартлі
     hartley_measure = np.log2(num_possible_values)
-    
     return hartley_measure
 
 def calculate_markov_process(image):
-    # Перетворення зображення в одномірний масив
     pixels = image.flatten()
-    
-    # Створення матриці переходів
     transition_matrix = np.zeros((256, 256))
-    
-    # Розрахунок ймовірностей переходів між сусідніми пікселями
     rows, cols = image.shape[:2]
     
     for i in range(rows):
         for j in range(cols):
             current_pixel = pixels[i * cols + j]
             
-            # Сусіди: праворуч, внизу
             if j < cols - 1:  # праворуч
                 right_pixel = pixels[i * cols + (j + 1)]
                 transition_matrix[current_pixel, right_pixel] += 1
@@ -69,7 +49,6 @@ def calculate_markov_process(image):
 
 # Додатковий новий функціонал
 def segment_image(image, n_segments=4):
-    # Сегментуємо зображення на n частин
     height = image.shape[0]
     segments = np.array_split(image, n_segments, axis=0)
     return segments
@@ -99,7 +78,7 @@ def compare_results(entropy_values, hartley_values):
     
     return avg_entropy, avg_hartley
 
-def visualize_results(image, entropy_values, hartley_values):
+def visualize_results(image, entropy_values, hartley_values, markov_matrices):
     n_segments = len(entropy_values)
     fig, ax = plt.subplots(1, n_segments, figsize=(15, 5))
     
@@ -109,8 +88,17 @@ def visualize_results(image, entropy_values, hartley_values):
         ax[i].imshow(bgr_to_rgb(segment))
         ax[i].set_title(f"Сегмент {i+1}\nЕнтропія: {entropy_values[i]:.2f}\nХартлі: {hartley_values[i]:.2f}")
         ax[i].axis('off')
-    
+
     plt.show()
+    
+    # Виведення Марковських матриць для кожного сегмента
+    for i, matrix in enumerate(markov_matrices):
+        print(f"Марковська матриця для сегмента {i + 1}:")
+        print(matrix[:5, :5])  # Виводимо тільки перші 5x5 елементів для зручності
+        plt.imshow(matrix, cmap='hot', interpolation='nearest')
+        plt.title(f'Markov Matrix for Segment {i + 1}')
+        plt.colorbar()
+        plt.show()
 
 # Вивід оригінального зображення
 image_task1 = bgr_to_rgb(image)
@@ -129,4 +117,4 @@ entropy_values, hartley_values, markov_matrices = process_segments(segments)
 avg_entropy, avg_hartley = compare_results(entropy_values, hartley_values)
 
 # Візуалізація результатів
-visualize_results(image_task1, entropy_values, hartley_values)
+visualize_results(image_task1, entropy_values, hartley_values, markov_matrices)
