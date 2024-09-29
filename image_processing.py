@@ -47,6 +47,10 @@ def calculate_markov_process(image):
     
     return transition_matrix
 
+# Функція для обчислення норми 
+def frobenius_norm(matrix):
+    return np.sqrt(np.sum(np.square(matrix)))
+
 # Додатковий новий функціонал
 def segment_image(image, n_segments=4):
     height = image.shape[0]
@@ -89,6 +93,44 @@ def compare_results(entropy_values, hartley_values, whole_entropy, whole_hartley
         print(f"Міра Хартлі для цілого зображення менше або дорівнює середньому міри Хартлі сегментів.")
     
     return avg_entropy, avg_hartley
+
+def compare_markov_matrices(markov_matrices, whole_markov_matrix):
+    # Обчислюємо норми  для кожної матриці і порівнюємо з цілим зображенням
+    whole_norm = frobenius_norm(whole_markov_matrix)
+    norms = [frobenius_norm(matrix) for matrix in markov_matrices]
+    
+    for i, norm in enumerate(norms):
+        print(f"Для сегмента {i + 1}: {norm}")
+    
+    print(f"Для цілого зображення: {whole_norm}")
+    
+    # Порівняння з цілим зображенням
+    for i, norm in enumerate(norms):
+        if whole_norm > norm:
+            print(f"Для цілого зображення більше, ніж для сегмента {i + 1}.")
+        else:
+            print(f"Для цілого зображення менше або дорівнює нормі для сегмента {i + 1}.")
+    
+    return norms, whole_norm
+
+def visualize_markov_comparison(markov_matrices, whole_markov_matrix, norms, whole_norm):
+    n_segments = len(markov_matrices)
+    
+    # Візуалізація норм 
+    plt.figure(figsize=(10, 5))
+    plt.bar(range(1, n_segments + 1), norms, color='blue', alpha=0.7, label="Норма  (сегменти)")
+    plt.axhline(y=whole_norm, color='red', linestyle='--', label="Норма  (ціле зображення)")
+    plt.legend()
+    plt.title("Марков: сегменти vs ціле зображення")
+    plt.show()
+
+    # Візуалізація різниці матриць
+    for i, matrix in enumerate(markov_matrices):
+        difference_matrix = np.abs(matrix - whole_markov_matrix)
+        plt.imshow(difference_matrix, cmap='hot', interpolation='nearest')
+        plt.title(f'Difference Markov Matrix for Segment {i + 1}')
+        plt.colorbar()
+        plt.show()
 
 def visualize_results(image, entropy_values, hartley_values, markov_matrices, whole_entropy, whole_hartley, whole_markov_matrix):
     n_segments = len(entropy_values)
@@ -152,6 +194,12 @@ whole_markov_matrix = calculate_markov_process(image_task1)
 
 # Порівняння середніх значень сегментів з цілим зображенням (Task 6)
 avg_entropy, avg_hartley = compare_results(entropy_values, hartley_values, whole_entropy, whole_hartley)
+
+# Порівняння Марковських матриць і виведення норм 
+norms, whole_norm = compare_markov_matrices(markov_matrices, whole_markov_matrix)
+
+# Візуалізація порівняння Марковських матриць
+visualize_markov_comparison(markov_matrices, whole_markov_matrix, norms, whole_norm)
 
 # Візуалізація всіх результатів (Task 8)
 visualize_results(image_task1, entropy_values, hartley_values, markov_matrices, whole_entropy, whole_hartley, whole_markov_matrix)
